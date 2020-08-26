@@ -22,12 +22,24 @@ function Ketron(I, game) {
         this.pos.y -= 1;
         this.makeBits();
         for (var k of this.ketbits) if(k) {
+          k.friends = [];
+          function findFriend(xof, yof, ketron) {
+            let ki = ketron.ketbits.indexOf(k);
+            let pos = new Vector(floor(ki%ketron.matrix.length),floor(ki/ketron.matrix.length));
+            let i = (pos.x + xof)+(pos.y+yof)*ketron.matrix.length;
+            if(i >= 0 && i < ketron.ketbits.length) return ketron.ketbits[i];
+            return false;
+          }
+          k.friends[0] = findFriend(0,-1, this);
+          k.friends[1] = findFriend(1,0, this);
+          k.friends[2] = findFriend(0,1, this);
+          k.friends[3] = findFriend(-1,0, this);
+          k.body = Object.assign([], this.ketbits);
+
           game.ketbits.push(k);
         }
         this.dead = true;
         return;
-        // push all ketbits to game.ketbits
-        // mark this ketron as dead
       }
     }
 
@@ -150,7 +162,7 @@ function Ketron(I, game) {
         let frame = frames[y][x];
         if(this.matrix[y][x])
         this.ketbits.push(
-          new Ketbit(x+this.pos.x, y+this.pos.y, this.angle*90, frame, this.matrix[y][x] == 2, game)
+          new Ketbit(x+this.pos.x, y+this.pos.y, this.angle*90, frame, this.matrix[y][x], game)
         );
         else this.ketbits.push(false);
       }
@@ -165,6 +177,7 @@ function Ketron(I, game) {
   }
 
   this.draw = () => {
+    for (var k of this.ketbits) if(k) k.update();
     for (var k of this.ketbits) if(k) k.draw();
   }
 }
