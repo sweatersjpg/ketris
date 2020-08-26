@@ -8,6 +8,9 @@ function init_() {
   setNumberOfLayers(6);
   lset(1);
 
+  pause_Button_.paused = false;
+  drawFN = new Game();
+
   disableScroll();
 }
 
