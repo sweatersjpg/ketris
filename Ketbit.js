@@ -16,6 +16,7 @@ function Ketbit(x, y, angle, frame, head, game) {
   // game.ketbits.push(this);
 
   this.update = () => {
+
     if(this.ext) this.ext--;
     if(head > 1 && !this.ext) {
       this.ex = 0;
@@ -31,7 +32,7 @@ function Ketbit(x, y, angle, frame, head, game) {
   }
 
   this.fall = () => {
-    this.pos.y += 1;
+    setTimeout(() => {this.pos.y += 1}, 10*33);
   }
 
   this.collided = () => {
@@ -68,8 +69,11 @@ function Ketbit(x, y, angle, frame, head, game) {
 
   this.kill = () => {
     game.ketbits.splice(game.ketbits.indexOf(this), 1);
-    // spawn falling block particle
+    // ----- done ----- spawn falling block particle
     // add points
     // do something special if head
+    let c = frame;
+    let frames = [144, c, 144, c, 144, c, 144, 145, 146, 147];
+    new Particle(game, this.pos.x*16, this.pos.y*16, frames, [4, 64, 64, 64, 64]);
   }
 }

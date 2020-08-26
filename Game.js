@@ -88,6 +88,7 @@ function Game(level) {
 
     for (var k of this.ketbits) k.update(); // not in charge of falling!!!!
     for (var k of this.ketbits) k.draw();
+    for (var i = this.particles.length-1; i >= 0; i--) this.particles[i].draw();
 
     for (var i = 0; i < 15; i++) {
       palset([63,64,64,64,64]);
@@ -141,6 +142,20 @@ function Game(level) {
       put("PRESS R", 200-7*4, 120-4+8, 63);
       // noLoop();
     }
+  }
+}
+
+function Particle(game, x, y, frames, pal, speed, ...rest) {
+  game.particles.push(this);
+  this.life = 0;
+  this.draw = () => {
+    palset(pal);
+    spr(frames[this.life], x, y, ...rest);
+    this.life++;
+    if(this.life == frames.length) this.kill();
+  }
+  this.kill = () => {
+    game.particles.splice(game.particles.indexOf(this), 1);
   }
 }
 
