@@ -120,6 +120,8 @@ function Game(level) {
         spr(1, 10*16, i*16, 1, 1, true);
       }
 
+      if(btn('a') && !pbtn('a')) drawFN = new Game();
+
       setCamera(0, 0);
       put("GAME OVER", 199-9*4, 120-4, 48);
       put("GAME OVER", 201-9*4, 120-4, 48);
@@ -127,6 +129,13 @@ function Game(level) {
       put("GAME OVER", 200-9*4, 119-4, 48);
 
       put("GAME OVER", 200-9*4, 120-4, 63);
+
+      put("PRESS R", 199-7*4, 120-4+8, 48);
+      put("PRESS R", 201-7*4, 120-4+8, 48);
+      put("PRESS R", 200-7*4, 121-4+8, 48);
+      put("PRESS R", 200-7*4, 119-4+8, 48);
+
+      put("PRESS R", 200-7*4, 120-4+8, 63);
       // noLoop();
     }
   }
