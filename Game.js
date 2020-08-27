@@ -86,6 +86,10 @@ function Game(level) {
     if(this.ketron.dead) {
       this.ketron = this.next;
       this.next = new Ketron(random(ketronIndex), this);
+      if(this.next.type == this.ketron.type) {
+        new Ketron(random(ketronIndex), this);
+        console.log('rolled agian');
+      }
     }
     if(this.ketron) this.ketron.draw();
 
