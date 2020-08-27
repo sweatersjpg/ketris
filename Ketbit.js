@@ -1,4 +1,4 @@
-function Ketbit(x, y, angle, frame, head, game) {
+function Ketbit(x, y, angle, frame, head, type, game) {
   this.pos = new Vector(x, y);
   this.f = frame;
   this.expressions = [3,4,5,6];
@@ -8,6 +8,10 @@ function Ketbit(x, y, angle, frame, head, game) {
   this.friends = [];
   this.body = [];
   this.blood = new Array(4).fill(random(0,1));
+
+  this.pal = [0, 1, 2, 3];
+  if("JS".includes(type)) this.pal = [24, 25, 26, 27];
+  if("LZ".includes(type)) this.pal = [8, 9, 10, 11]
 
   if(head > 1) {
     this.f = this.expressions[this.ex];
@@ -32,7 +36,7 @@ function Ketbit(x, y, angle, frame, head, game) {
   }
 
   this.fall = () => {
-    setTimeout(() => {this.pos.y += 1}, 10*33);
+    setTimeout(() => {this.pos.y += 1}, 12*33);
   }
 
   this.collided = () => {
@@ -48,18 +52,18 @@ function Ketbit(x, y, angle, frame, head, game) {
       if(isDismembered) this.f = this.expressions[3];
     }
 
-    palset([0,1,2,64,64]);
+    palset([this.pal[0],this.pal[1],this.pal[2],64,64]);
     spr(this.f, this.pos.x * 16, this.pos.y * 16, 1, 1, false, this.angle);
 
     let rots = [0,90,180,270];
     for (var i = 0; i < 4; i++) {
       if(this.friends[i] && this.friends[i].dead) {
-        palset([4,64,64,64,64]);
+        palset([16,64,64,64,64]);
         spr(7+this.blood[i], this.pos.x * 16, this.pos.y * 16, 1, 1, false, rots[i]);
       }
     }
 
-    palset([64,64,64,3,0]);
+    palset([64,64,64,this.pal[3],game.background]);
     spr(this.f, this.pos.x * 16, this.pos.y * 16, 1, 1, false, this.angle);
 
     if(!DEBUG) return;
@@ -74,6 +78,6 @@ function Ketbit(x, y, angle, frame, head, game) {
     // do something special if head
     let c = frame;
     let frames = [144, c, 144, c, 144, c, 144, 145, 146, 147];
-    new Particle(game, this.pos.x*16, this.pos.y*16, frames, [4, 64, 64, 64, 64]);
+    new Particle(game, this.pos.x*16, this.pos.y*16, frames, [16, 64, 64, 64, 64]);
   }
 }

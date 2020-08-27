@@ -60,6 +60,7 @@ function Game(level) {
   this.particles = [];
   this.ketron = new Ketron(random(ketronIndex), this);
   this.next = new Ketron(random(ketronIndex), this);
+  this.background = 48;
 
   this.drawUI = () => {
     palset([64,64,64,63,64]);
@@ -67,7 +68,9 @@ function Game(level) {
   }
 
   this.gameLoop = () => {
-    cls(48);
+    if(btn('a') && !pbtn('a')) drawFN = new Game();
+
+    cls(this.background);
     for (var i = 0; i < floor(random(1,4)); i++) ketronNames[5] = changeStringRandom(ketronNames[5]);
 
     this.drawUI();
@@ -113,7 +116,7 @@ function Game(level) {
 
   this.gameOver = () => {
     this.draw = () => {
-      cls(48);
+      cls(this.background);
 
       setCamera(200-5*16, 0);
       for (var k of this.ketbits) k.draw();
@@ -127,17 +130,17 @@ function Game(level) {
       if(btn('a') && !pbtn('a')) drawFN = new Game();
 
       setCamera(0, 0);
-      put("GAME OVER", 199-9*4, 120-4, 48);
-      put("GAME OVER", 201-9*4, 120-4, 48);
-      put("GAME OVER", 200-9*4, 121-4, 48);
-      put("GAME OVER", 200-9*4, 119-4, 48);
+      put("GAME OVER", 199-9*4, 120-4, this.background);
+      put("GAME OVER", 201-9*4, 120-4, this.background);
+      put("GAME OVER", 200-9*4, 121-4, this.background);
+      put("GAME OVER", 200-9*4, 119-4, this.background);
 
       put("GAME OVER", 200-9*4, 120-4, 63);
 
-      put("PRESS R", 199-7*4, 120-4+8, 48);
-      put("PRESS R", 201-7*4, 120-4+8, 48);
-      put("PRESS R", 200-7*4, 121-4+8, 48);
-      put("PRESS R", 200-7*4, 119-4+8, 48);
+      put("PRESS R", 199-7*4, 120-4+8, this.background);
+      put("PRESS R", 201-7*4, 120-4+8, this.background);
+      put("PRESS R", 200-7*4, 121-4+8, this.background);
+      put("PRESS R", 200-7*4, 119-4+8, this.background);
 
       put("PRESS R", 200-7*4, 120-4+8, 63);
       // noLoop();

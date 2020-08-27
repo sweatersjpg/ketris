@@ -5,6 +5,10 @@ function Ketron(I, game) {
   this.spr = ketronSpr[this.index];
   this.matrix = Object.assign([], ketrons[this.index]);
   this.time = game.speed/2;
+  this.keytime = {
+    'left':0,
+    'right':0
+  };
 
   this.pos = new Vector(5-floor(this.matrix.length/2),-2);
 
@@ -14,6 +18,56 @@ function Ketron(I, game) {
 
   this.update = () => { // this is in charge of falling
     this.time--;
+
+    if(btn('left') && !pbtn('left')) {
+      this.keytime['left'] = 8;
+      this.pos.x -= 1;
+      this.makeBits();
+      if(this.collided()) {
+        this.pos.x += 1;
+        this.makeBits();
+      }
+    }
+    if(btn('right') && !pbtn('right')) {
+      this.keytime['right'] = 8;
+      this.pos.x += 1;
+      this.makeBits();
+      if(this.collided()) {
+        this.pos.x -= 1;
+        this.makeBits();
+      }
+    }
+    if(btn('left')) {
+      if(this.keytime['left']<=0) {
+        this.keytime['left'] = 1;
+        this.pos.x -= 1;
+        this.makeBits();
+        if(this.collided()) {
+          this.pos.x += 1;
+          this.makeBits();
+        }
+      } else this.keytime['left']--;
+    }
+    if(btn('right')) {
+      if(this.keytime['right']<=0) {
+        this.keytime['right'] = 1;
+        this.pos.x += 1;
+        this.makeBits();
+        if(this.collided()) {
+          this.pos.x -= 1;
+          this.makeBits();
+        }
+      } else this.keytime['right']--;
+    }
+
+    if(btn('up') && !pbtn('up')) {
+      this.rotate('right');
+    }
+    if(btn('down') && this.time > 1) {
+      // this.rotate('right');
+      this.time = 1;
+    }
+
     if(this.time <= 0) {
       this.time = game.speed;
       this.pos.y += 1;
@@ -41,30 +95,6 @@ function Ketron(I, game) {
         this.dead = true;
         return;
       }
-    }
-
-    if(btn('left') && !pbtn('left')) {
-      this.pos.x -= 1;
-      this.makeBits();
-      if(this.collided()) {
-        this.pos.x += 1;
-        this.makeBits();
-      }
-    }
-    if(btn('right') && !pbtn('right')) {
-      this.pos.x += 1;
-      this.makeBits();
-      if(this.collided()) {
-        this.pos.x -= 1;
-        this.makeBits();
-      }
-    }
-    if(btn('up') && !pbtn('up')) {
-      this.rotate('right');
-    }
-    if(btn('down') && this.time > 2) {
-      // this.rotate('right');
-      this.time = 2;
     }
   }
 
@@ -102,13 +132,15 @@ function Ketron(I, game) {
     this.makeBits();
 
     for (var i = 0; i < 2; i++) {
-      let moveLeft = false, moveRight = false;
+      let moveLeft = false, moveRight = false, moveUp;
       for (var k of this.ketbits) if(k) {
         if(k.pos.x < 0) moveRight = true;
         if(k.pos.x >= 10) moveLeft = true;
+        if(k.pos.y >= 15) moveUp = true;
       }
       if(moveLeft) this.pos.x -= 1;
       if(moveRight) this.pos.x += 1;
+      if(moveUp) this.pos.y -= 1;
       this.makeBits();
 
       for (var y = 0; y < this.matrix.length; y++) {
@@ -162,7 +194,7 @@ function Ketron(I, game) {
         let frame = frames[y][x];
         if(this.matrix[y][x])
         this.ketbits.push(
-          new Ketbit(x+this.pos.x, y+this.pos.y, this.angle*90, frame, this.matrix[y][x], game)
+          new Ketbit(x+this.pos.x, y+this.pos.y, this.angle*90, frame, this.matrix[y][x], I, game)
         );
         else this.ketbits.push(false);
       }

@@ -14,17 +14,17 @@ let WD;
 let D = { W: 400, H: 240, S: 0}
 const FRAMERATE = 30;
 const PAL = [
-  '#c5ccb8','#9d9f7f','#6e6962','#211a2a','#9a4f50','#a6003f','#960000','#6f2f00',
-  '#433b00','#005f00','#00a62f','#005f4f','#003b7f','#211a2a','#211a2a','#211a2a',
-  '#b6b6be','#0057f6','#1737fe','#6f00e2','#ae00c6','#e6007f','#e60700','#ca4f00',
-  '#8e7700','#1f9600','#00a62f','#008e67','#007fc2','#211a2a','#211a2a','#211a2a',
-  '#9a9a97','#27aefe','#5f6ffe','#9e6ffe','#ce4ffe','#fe2fde','#fe6f67','#fe961f',
+  '#c5ccb8','#9d9f7f','#6e6962','#211a2a','#a593a5','#8b5580','#433455','#211a2a',
+  '#9a9a97','#6f6776','#433455','#211a2a','#64b1af','#387080','#433455','#211a2a',
+  '#9a4f50','#0057f6','#1737fe','#6f00e2','#be955c','#8d6268','#433455','#211a2a',
+  '#7e9e99','#5d6872','#433455','#211a2a','#c6868e','#8b5580','#433455','#211a2a',
+  '#9d9f7f','#557064','#433455','#211a2a','#7ca4c5','#416aa3','#433455','#211a2a',
   '#ceaa00','#6fd600','#00e647','#17e69e','#00cede','#474747','#211a2a','#211a2a',
   '#c5ccb8','#aecefe','#b6befe','#ceaefe','#f69efe','#feaee6','#fec6d6','#f6cfae',
   '#fef6ae','#d6fea6','#96fe96','#9efeee','#6feaf6','#8e8e8e','#211a2a','#211a2a'
 ];
 let pointer_ = { y : 0, x : 0, c : 48, ox : 0 };
-let defaultControls_ = [[87, 38], [83, 40, 32], [65, 37], [68, 39], [82, 32], 69, 27, [9,81]];
+let defaultControls_ = [[87, 38], [83, 40, 32], [65, 37], [68, 39], 82, 69, 27, [9,81]];
 let controls_ = defaultControls_;
 let controlsP2_ = [38, 40, 37, 39, 13, 222];
 const btnlist = ['up','down','left','right','a','b','start','select'];
@@ -46,7 +46,7 @@ let pregamepadbtns = [
 let ctr = new Array(255);
 let menu;
 let font = new Array(64);
-let fntColours = [48, 63];
+let fntColours = new Array(64).fill(0).map((x,i) => i);
 let pause_Button_ = { paused : true, pressed : false }
 let layer = new Array(2);
 let currentLayer = 0;
