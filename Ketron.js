@@ -10,7 +10,7 @@ function Ketron(I, game) {
     'right':0
   };
 
-  this.pos = new Vector(5-floor(this.matrix.length/2),-2);
+  this.pos = new Vector(5-floor(this.matrix.length/2),-1);
 
   this.angle = 0;
 

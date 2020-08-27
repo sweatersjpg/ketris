@@ -61,47 +61,68 @@ function Game(level) {
   this.ketron = new Ketron(random(ketronIndex), this);
   this.next = new Ketron(random(ketronIndex), this);
   this.background = 48;
+  this.held = false;
 
   this.drawUI = () => {
-    palset([64,64,64,63,64]);
-    spr(58, 16, 0, 6, 4);
-  }
-
-  this.gameLoop = () => {
-    if(btn('a') && !pbtn('a')) drawFN = new Game();
-
-    cls(this.background);
-    for (var i = 0; i < floor(random(1,4)); i++) ketronNames[5] = changeStringRandom(ketronNames[5]);
-
-    this.drawUI();
-
-    if("O".includes(this.next.type)) setCamera(-16, 48);
-    if("SZJLT".includes(this.next.type)) setCamera(-24, 48);
-    if("I".includes(this.next.type)) setCamera(-16, 40);
-    if(this.next) this.next.draw();
-
     setCamera(200-5*16, 0);
-
-    if(this.ketron) this.ketron.update(); // in charge of peices falling!!!!
-    if(this.ketron.dead) {
-      this.ketron = this.next;
-      this.next = new Ketron(random(ketronIndex), this);
-      if(this.next.type == this.ketron.type) {
-        new Ketron(random(ketronIndex), this);
-        console.log('rolled agian');
-      }
-    }
-    if(this.ketron) this.ketron.draw();
-
-    for (var k of this.ketbits) k.update(); // not in charge of falling!!!!
-    for (var k of this.ketbits) k.draw();
-    for (var i = this.particles.length-1; i >= 0; i--) this.particles[i].draw();
 
     for (var i = 0; i < 15; i++) {
       palset([63,64,64,64,64]);
       spr(1, -16, i*16);
       spr(1, 10*16, i*16, 1, 1, true);
     }
+
+    setCamera(0,0);
+
+    palset([64,64,64,63,64]);
+    spr(58, 16, 0, 6, 4);
+    put("NEXT", 35, 49, 63);
+
+    spr(58, 16, 48, 6, 4);
+    put("HOLD", 35, 97, 63);
+  }
+
+  this.gameLoop = () => {
+    if(btn('b') && !pbtn('b')) drawFN = new Game();
+
+    cls(this.background);
+    // for (var i = 0; i < floor(random(1,4)); i++) ketronNames[5] = changeStringRandom(ketronNames[5]);
+
+    this.drawUI();
+
+    if("O".includes(this.next.type)) setCamera(-16, 32);
+    if("SZJLT".includes(this.next.type)) setCamera(-24, 32);
+    if("I".includes(this.next.type)) setCamera(-16, 24);
+    if(this.next) this.next.draw();
+
+    if(this.held) {
+      if("O".includes(this.held.type)) setCamera(-16, 32+48);
+      if("SZJLT".includes(this.held.type)) setCamera(-24, 32+48);
+      if("I".includes(this.held.type)) setCamera(-16, 24+48);
+      this.held.draw();
+    }
+
+    setCamera(200-5*16, 0);
+
+    if(btn('a') && !pbtn('a') && this.heldHistory != this.ketron) {
+      let held = this.held;
+      this.held = new Ketron(this.ketron.type, this);
+      this.heldHistory = held;
+      if(held) this.ketron = held;
+      else this.ketron.dead = true;
+    }
+
+    if(this.ketron) this.ketron.update(); // in charge of peices falling!!!!
+    if(this.ketron.dead) {
+      this.ketron = this.next;
+      this.next = new Ketron(random(ketronIndex), this);
+      if(this.next.type == this.ketron.type) new Ketron(random(ketronIndex), this);
+    }
+    if(this.ketron) this.ketron.draw();
+
+    for (var k of this.ketbits) k.update(); // not in charge of falling!!!!
+    for (var k of this.ketbits) k.draw();
+    for (var i = this.particles.length-1; i >= 0; i--) this.particles[i].draw();
 
     let rowCount = new Array(15).fill(0);
     for (var k of this.ketbits) {
@@ -125,15 +146,11 @@ function Game(level) {
       setCamera(200-5*16, 0);
       for (var k of this.ketbits) k.draw();
 
-      for (var i = 0; i < 15; i++) {
-        palset([63,64,64,64,64]);
-        spr(1, -16, i*16);
-        spr(1, 10*16, i*16, 1, 1, true);
-      }
+      if(btn('b') && !pbtn('b')) drawFN = new Game();
 
-      if(btn('a') && !pbtn('a')) drawFN = new Game();
-
+      this.drawUI();
       setCamera(0, 0);
+
       put("GAME OVER", 199-9*4, 120-4, this.background);
       put("GAME OVER", 201-9*4, 120-4, this.background);
       put("GAME OVER", 200-9*4, 121-4, this.background);

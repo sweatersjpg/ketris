@@ -24,7 +24,7 @@ const PAL = [
   '#fef6ae','#d6fea6','#96fe96','#9efeee','#6feaf6','#8e8e8e','#211a2a','#211a2a'
 ];
 let pointer_ = { y : 0, x : 0, c : 48, ox : 0 };
-let defaultControls_ = [[87, 38], [83, 40, 32], [65, 37], [68, 39], 82, 69, 27, [9,81]];
+let defaultControls_ = [[87, 38], [83, 40], [65, 37], [68, 39], [67, 13, 32], 82, 27, [9,81]];
 let controls_ = defaultControls_;
 let controlsP2_ = [38, 40, 37, 39, 13, 222];
 const btnlist = ['up','down','left','right','a','b','start','select'];
