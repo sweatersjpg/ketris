@@ -63,8 +63,10 @@ function Game(level) {
   this.background = 48;
   this.held = false;
 
+  this.shake = new Vector(0,0);
+
   this.drawUI = () => {
-    setCamera(200-5*16, 0);
+    setCamera(200-5*16+this.shake.x, this.shake.y);
 
     for (var i = 0; i < 15; i++) {
       palset([63,64,64,64,64]);
@@ -72,7 +74,7 @@ function Game(level) {
       spr(1, 10*16, i*16, 1, 1, true);
     }
 
-    setCamera(0,0);
+    setCamera(this.shake.x,this.shake.y);
 
     palset([64,64,64,63,64]);
     spr(58, 16, 0, 6, 4);
@@ -83,10 +85,15 @@ function Game(level) {
   }
 
   this.gameLoop = () => {
-    if(btn('b') && !pbtn('b')) drawFN = new Game();
+    if(btn('b') && !pbtn('b')) this.gameOver();
 
     cls(this.background);
     // for (var i = 0; i < floor(random(1,4)); i++) ketronNames[5] = changeStringRandom(ketronNames[5]);
+
+    if(this.shake.mag()) {
+      this.shake.rotate(this.shake.heading()+PI);
+      this.shake.setMag(this.shake.mag()-1);
+    }
 
     this.drawUI();
 
@@ -102,7 +109,7 @@ function Game(level) {
       this.held.draw();
     }
 
-    setCamera(200-5*16, 0);
+    setCamera(200-5*16 + this.shake.x, 0 + this.shake.y);
 
     if(btn('a') && !pbtn('a') && this.heldHistory != this.ketron) {
       let held = this.held;
@@ -127,6 +134,11 @@ function Game(level) {
     let rowCount = new Array(15).fill(0);
     for (var k of this.ketbits) {
       for (var i = 0; i < rowCount.length; i++) if(k.pos.y == i) rowCount[i] += 1;
+    }
+
+    for (var i = 0; i < rowCount.length; i++) if(rowCount[i] >= 10) {
+      if(!this.shake.mag()) this.shake.set(3,0).rotate(HALF_PI/2);
+      else this.shake.setMag(this.shake.mag()+1);
     }
 
     for (var k of this.ketbits) {

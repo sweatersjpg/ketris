@@ -136,7 +136,7 @@ function defaultMenu() {
 
     textc('30');
     put("PAUSED ", 32, D.H/2 - 20);
-    if(!nplayers) put("(press space)");
+    if(!nplayers) put("(press esc)");
 
     if( btn('a')) {
       this.bp['a'] = true;
@@ -154,7 +154,7 @@ function defaultMenu() {
       }
     } else this.bp['a'] = false;
 
-    if(!nplayers) {
+    // if(!nplayers) {
       if(btn('up')) {
         if(!this.bp['up']) {
           this.selected -= 1;
@@ -173,10 +173,10 @@ function defaultMenu() {
 
       locate(32, D.H/2 + 4);
       put("DEBUG");
-    }
+    // }
     put(">", 24, D.H/2 - 4 + (this.selected * 8));
     locate(32, D.H/2 - 4);
-    put("RUN");
+    put("RESTART");
 
     textc('3f');
   }

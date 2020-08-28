@@ -1,3 +1,6 @@
+const keyDelay = 4;
+const keyRepeat = 1;
+
 function Ketron(I, game) {
   this.type = I;
   this.index = ketronIndex.indexOf(I);
@@ -7,8 +10,11 @@ function Ketron(I, game) {
   this.time = game.speed/2;
   this.keytime = {
     'left':0,
-    'right':0
+    'right':0,
+    'down':0
   };
+
+  this.landTimer = 0;
 
   this.pos = new Vector(5-floor(this.matrix.length/2),-1);
 
@@ -20,62 +26,26 @@ function Ketron(I, game) {
     this.time--;
     this.makeCount = 0;
 
-    if(btn('left') && !pbtn('left')) {
-      this.keytime['left'] = 8;
-      this.pos.x -= 1;
-      this.makeBits();
-      if(this.collided()) {
-        this.pos.x += 1;
-        this.makeBits();
-      }
-    }
-    if(btn('right') && !pbtn('right')) {
-      this.keytime['right'] = 8;
-      this.pos.x += 1;
-      this.makeBits();
-      if(this.collided()) {
-        this.pos.x -= 1;
-        this.makeBits();
-      }
-    }
-    if(btn('left')) {
-      if(this.keytime['left']<=0) {
-        this.keytime['left'] = 1;
-        this.pos.x -= 1;
-        this.makeBits();
-        if(this.collided()) {
-          this.pos.x += 1;
-          this.makeBits();
-        }
-      } else this.keytime['left']--;
-    }
-    if(btn('right')) {
-      if(this.keytime['right']<=0) {
-        this.keytime['right'] = 1;
-        this.pos.x += 1;
-        this.makeBits();
-        if(this.collided()) {
-          this.pos.x -= 1;
-          this.makeBits();
-        }
-      } else this.keytime['right']--;
-    }
-
-    if(btn('up') && !pbtn('up')) {
-      this.rotate('right');
-    }
-    if(btn('down') && this.time > 1) {
-      // this.rotate('right');
-      this.time = 1;
-    }
+    if(this.landTimer) this.landTimer--;
+    if(this.landTimer) this.time = 0;
 
     if(this.time <= 0) {
       this.time = game.speed;
-      this.pos.y += 1;
-      this.makeBits();
-      if(this.landed()) {
-        this.pos.y -= 1;
+      if(!this.landTimer) {
+        this.pos.y += 1;
         this.makeBits();
+        if(this.collided()) {
+          this.pos.y -= 1;
+          this.makeBits();
+        }
+      }
+      if(!this.landed()) this.landTimer = 0;
+      if(!this.landTimer && this.landed()) {
+        this.landTimer = 11;
+        if(btn('down')) game.shake.set(2,0).rotate(HALF_PI/2);
+      } else if(this.landTimer == 1) {
+        // this.pos.y -= 1;
+        // this.makeBits();
         for (var k of this.ketbits) if(k) {
           k.friends = [];
           function findFriend(xof, yof, ketron) {
@@ -97,6 +67,64 @@ function Ketron(I, game) {
         return;
       }
     }
+    this.makeBits();
+
+    if(btn('left') && !pbtn('left')) {
+      this.keytime['left'] = keyDelay;
+      this.pos.x -= 1;
+      this.makeBits();
+      if(this.collided()) {
+        this.pos.x += 1;
+        this.makeBits();
+      }
+    }
+    if(btn('right') && !pbtn('right')) {
+      this.keytime['right'] = keyDelay;
+      this.pos.x += 1;
+      this.makeBits();
+      if(this.collided()) {
+        this.pos.x -= 1;
+        this.makeBits();
+      }
+    }
+    if(btn('left')) {
+      if(this.keytime['left']<=0) {
+        this.keytime['left'] = keyRepeat;
+        this.pos.x -= 1;
+        this.makeBits();
+        if(this.collided()) {
+          this.pos.x += 1;
+          this.makeBits();
+        }
+      } else this.keytime['left']--;
+    }
+    if(btn('right')) {
+      if(this.keytime['right']<=0) {
+        this.keytime['right'] = keyRepeat;
+        this.pos.x += 1;
+        this.makeBits();
+        if(this.collided()) {
+          this.pos.x -= 1;
+          this.makeBits();
+        }
+      } else this.keytime['right']--;
+    }
+
+    if(btn('up') && !pbtn('up')) {
+      this.rotate('right');
+    }
+    
+    if(btn('down') && !pbtn('down')) {
+      this.keytime['down'] = keyDelay;
+      this.time = 0;
+    }
+    if(btn('down')) {
+      if(this.keytime['down']==1) {
+        this.keytime['down'] = keyRepeat;
+        this.time = 0;
+      } else this.keytime['down']--;
+    }
+
   }
 
   this.collided = () => {
@@ -110,9 +138,9 @@ function Ketron(I, game) {
 
   this.landed = () => {
     for (var k of this.ketbits) if(k) {
-      if(k.pos.y >= 15) return true;
+      if(k.pos.y+1 >= 15) return true;
       for (var gk of game.ketbits)  {
-        if(k.pos.x == gk.pos.x && k.pos.y == gk.pos.y) return true;
+        if(k.pos.x == gk.pos.x && k.pos.y+1 == gk.pos.y) return true;
       }
     }
     return false;
