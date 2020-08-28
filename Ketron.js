@@ -18,6 +18,7 @@ function Ketron(I, game) {
 
   this.update = () => { // this is in charge of falling
     this.time--;
+    this.makeCount = 0;
 
     if(btn('left') && !pbtn('left')) {
       this.keytime['left'] = 8;
@@ -175,6 +176,15 @@ function Ketron(I, game) {
   }
 
   this.makeBits = () => {
+    if(this.makeCount == 0 && this.ketbits.length && btn('down')) {
+      for (var k of this.ketbits) if(k) {
+        let frames = [9,9,10,10,11,11,12,12];
+        let col = k.pal[0];
+        if(col == 0) col = k.pal[1];
+        new Particle(game, k.pos.x*16, k.pos.y*16, frames, [col,64,64,64,64], 1, 1, false, random([0,90,180,270]));
+      }
+    }
+    this.makeCount++;
     this.ketbits = [];
     let frames = [];
     for (var y = 0; y < this.matrix.length; y++) {

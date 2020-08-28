@@ -45,7 +45,7 @@ function Ketbit(x, y, angle, frame, head, type, game) {
   }
 
   this.draw = () => {
-
+    lset(2);
     if(head > 1) {
       let isDismembered = false;
       for (var b of this.body) if(b.dead) isDismembered = true;

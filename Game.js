@@ -169,11 +169,12 @@ function Game(level) {
   }
 }
 
-function Particle(game, x, y, frames, pal, speed, ...rest) {
+function Particle(game, x, y, frames, pal, ...rest) {
   game.particles.push(this);
   this.life = 0;
   this.draw = () => {
     palset(pal);
+    lset(1);
     spr(frames[this.life], x, y, ...rest);
     this.life++;
     if(this.life == frames.length) this.kill();
