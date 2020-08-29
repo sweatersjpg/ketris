@@ -55,6 +55,9 @@ let ketrons = [
 
 function Game(level) {
   this.speed = 30;
+  this.level = 0;
+  this.score = 0;
+  this.rowsCleared = 0;
 
   this.ketbits = [];
   this.particles = [];
@@ -76,12 +79,26 @@ function Game(level) {
 
     setCamera(this.shake.x,this.shake.y);
 
+    // put(sprImg.length);
+
     palset([64,64,64,63,64]);
     spr(58, 16, 0, 6, 4);
     put("NEXT", 35, 49, 63);
 
     spr(58, 16, 48, 6, 4);
     put("HOLD", 35, 97, 63);
+
+    setCamera(200+6*16+this.shake.x, this.shake.y + 16);
+    put("-SCORE-", 0.1, 0.1);
+    put(this.score, 0.1, 10);
+    put("-LINES-", 0.1, 22);
+    put(this.rowsCleared, 0.1, 30);
+  }
+
+  this.addShake = (amp) => {
+    let a = amp || 2;
+    if(this.shake.mag()) this.shake.setMag(this.shake.mag()+a);
+    else this.shake.set(3,0).rotate(radians(random([0, 120, 240])));
   }
 
   this.gameLoop = () => {
@@ -90,8 +107,8 @@ function Game(level) {
     cls(this.background);
     // for (var i = 0; i < floor(random(1,4)); i++) ketronNames[5] = changeStringRandom(ketronNames[5]);
 
-    if(this.shake.mag()) {
-      this.shake.rotate(this.shake.heading()+PI);
+    if(this.shake.mag() >= 0.01) {
+      this.shake.rotate(this.shake.heading()+TWO_PI/3);
       this.shake.setMag(this.shake.mag()-1);
     }
 
@@ -136,32 +153,60 @@ function Game(level) {
       for (var i = 0; i < rowCount.length; i++) if(k.pos.y == i) rowCount[i] += 1;
     }
 
+    let rows = 0;
     for (var i = 0; i < rowCount.length; i++) if(rowCount[i] >= 10) {
-      if(!this.shake.mag()) this.shake.set(3,0).rotate(HALF_PI/2);
-      else this.shake.setMag(this.shake.mag()+1);
+      rows++;
+      this.addShake();
     }
 
+    let heads = 0;
     for (var k of this.ketbits) {
       for (var i = 0; i < rowCount.length; i++) if(rowCount[i] >= 10) {
         if(k.pos.y < i) k.fall();
-        else if(k.pos.y == i) k.dead = true;
+        else if(k.pos.y == i) {
+          k.dead = true;
+          if(k.head > 1) heads++;
+        }
       }
     }
+
+    this.updateScore(rows, heads);
+
     for (var i = this.ketbits.length-1; i >= 0; i--) if(this.ketbits[i].dead) this.ketbits[i].kill();
   }
   this.draw = this.gameLoop;
 
+  this.updateScore = (rows, heads) => {
+    let score = [0, 40, 100, 300, 1200];
+
+    this.rowsCleared += rows;
+    this.level = floor(this.rowsCleared/10);
+
+    this.score += score[rows] * (this.level + 1);
+  }
+
   this.gameOver = () => {
+
+    if(this.ketron) for (var k of this.ketron.ketbits) if(k) {
+      this.ketbits.push(k);
+    }
+    this.ketron = false;
+
     this.draw = () => {
       cls(this.background);
 
       setCamera(200-5*16, 0);
       for (var k of this.ketbits) k.draw();
 
+      for (var i = this.ketbits.length-1; i >= 0; i--) this.ketbits[i].kill();
+
+      for (var i = this.particles.length-1; i >= 0; i--) this.particles[i].draw();
+
       if(btn('b') && !pbtn('b')) drawFN = new Game();
 
       this.drawUI();
       setCamera(0, 0);
+      lset(0);
 
       put("GAME OVER", 199-9*4, 120-4, this.background);
       put("GAME OVER", 201-9*4, 120-4, this.background);
@@ -178,6 +223,61 @@ function Game(level) {
       put("PRESS R", 200-7*4, 120-4+8, 63);
       // noLoop();
     }
+  }
+
+}
+
+function HeadParticle(game, x, y, angle, pal) {
+  game.particles.push(this);
+  this.pos = new Vector(x, y);
+  this.vel = new Vector(random(-2,2),random(-5,-12));
+  this.angle = angle;
+  this.avel = random([-5,5,-10,10]);
+  this.draw = () => {
+    this.vel.y += 1;
+    this.pos.add(this.vel);
+    this.angle += this.avel;
+
+    lset(3);
+
+    palset([pal[0],pal[1],pal[2],64,64]);
+    spr(6, this.pos.x, this.pos.y, 1, 1, false, this.angle);
+
+    palset([16, 64,64,64,64]);
+    spr(7, this.pos.x, this.pos.y, 1, 1, false, this.angle+180);
+
+    palset([64,64,64,63,64]);
+    spr(6, this.pos.x, this.pos.y, 1, 1, false, this.angle);
+
+    if(this.pos.y > 240) this.kill();
+  }
+  this.kill = () => {
+    game.particles.splice(game.particles.indexOf(this), 1);
+  }
+}
+
+function Blood(game, x, y) {
+  game.particles.push(this);
+  this.pos = new Vector(x, y);
+  this.vel = new Vector(random(-5,5),random(-5,-12));
+  this.size = random([4,2]);
+
+  if(random() < 0.70) new Blood(game, x, y);
+  // setTimeout(() => {new Blood(game, x, y)}, 0);
+
+  this.draw = () => {
+    this.vel.add(0,1);
+    this.pos.add(this.vel);
+
+    lset(3);
+
+    palset([16,64,64,64,64]);
+    spr(0, this.pos.x, this.pos.y, 1, 1, false, floor(degrees(this.vel.heading())), this.size*2, this.size);
+
+    if(this.pos.y > 240) this.kill();
+  }
+  this.kill = () => {
+    game.particles.splice(game.particles.indexOf(this), 1);
   }
 }
 

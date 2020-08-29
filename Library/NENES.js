@@ -343,7 +343,9 @@ function setDrawFunction(fn) { drawFN = fn; }
 
 function genID(p, f, w, h, a, d) {
   while(a<=0) a += TWO_PI;
-  let str = ""+p+""+f+""+w+""+h+""+floor(((a*180/PI)%360)+1)+""+d+""+sprDataID;
+  a = floor(((a*180/PI)%360));
+  if(a > 360 || a < 0) console.log(a);
+  let str = ""+p+""+f+""+w+""+h+""+a+""+d+""+sprDataID;
   var hash = 0, i, chr;
   if (str.length === 0) return hash;
   for (i = 0; i < str.length; i++) {

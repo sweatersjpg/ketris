@@ -30,7 +30,7 @@ function Ketron(I, game) {
     if(this.landTimer) this.time = 0;
 
     if(this.time <= 0) {
-      this.time = game.speed;
+      this.time = game.speed - game.level;
       if(!this.landTimer) {
         this.pos.y += 1;
         this.makeBits();
@@ -42,7 +42,7 @@ function Ketron(I, game) {
       if(!this.landed()) this.landTimer = 0;
       if(!this.landTimer && this.landed()) {
         this.landTimer = 11;
-        if(btn('down')) game.shake.set(2,0).rotate(HALF_PI/2);
+        if(btn('down')) game.addShake();
       } else if(this.landTimer == 1) {
         // this.pos.y -= 1;
         // this.makeBits();
@@ -113,7 +113,7 @@ function Ketron(I, game) {
     if(btn('up') && !pbtn('up')) {
       this.rotate('right');
     }
-    
+
     if(btn('down') && !pbtn('down')) {
       this.keytime['down'] = keyDelay;
       this.time = 0;
@@ -208,7 +208,7 @@ function Ketron(I, game) {
       for (var k of this.ketbits) if(k) {
         let frames = [9,9,10,10,11,11,12,12];
         let col = k.pal[0];
-        if(col == 0) col = k.pal[1];
+        if(col == 0) col = 8;
         new Particle(game, k.pos.x*16, k.pos.y*16, frames, [col,64,64,64,64], 1, 1, false, random([0,90,180,270]));
       }
     }
@@ -248,6 +248,12 @@ function Ketron(I, game) {
 
   this.draw = () => {
     for (var k of this.ketbits) if(k) k.update();
-    for (var k of this.ketbits) if(k) k.draw();
+    if(this.landTimer) {
+      // for (var k of this.ketbits) if(k) k.draw();
+      if (frameCount % 2 == 0) {
+        for (var k of this.ketbits) if(k) k.draw(true);
+      }
+      else for (var k of this.ketbits) if(k) k.draw();
+    } else for (var k of this.ketbits) if(k) k.draw();
   }
 }
