@@ -76,10 +76,12 @@ function Ketbit(x, y, angle, frame, head, type, game) {
     // ----- done ----- spawn falling block particle
     // add points
     // do something special if head
-    if(head > 1) new HeadParticle(game, this.pos.x*16, this.pos.y*16, head, this.pal);
-    new Blood(game, this.pos.x*16+8, this.pos.y*16+8);
     let c = frame;
     let frames = [144, c, 144, c, 144, c, 144, 145, 146, 147];
-    new Particle(game, this.pos.x*16, this.pos.y*16, frames, [16, 64, 64, 64, 64]);
+    if(head > 1) new HeadParticle(game, this.pos.x*16, this.pos.y*16, head, this.pal);
+    else new Particle(game, this.pos.x*16, this.pos.y*16, frames, [16, 64, 64, 64, 64]);
+
+    new Blood(game, this.pos.x*16+8, this.pos.y*16+8);
+
   }
 }

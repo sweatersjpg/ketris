@@ -22,6 +22,20 @@ function Ketron(I, game) {
 
   this.ketbits = [];
 
+  this.drawGhost = () => {
+    let count = 0;
+    while(!this.landed()) {
+      for (var k of this.ketbits) if(k) k.pos.y++;
+      count++;
+    }
+    this.makeBits();
+
+    palset([64,64,64,8,64]);
+    let pos = new Vector(this.pos.x, this.pos.y+count).mult(16);
+    spr(this.spr+11*16, pos.x, pos.y, this.matrix.length, this.matrix.length, false, this.angle*90);
+
+  }
+
   this.update = () => { // this is in charge of falling
     this.time--;
     this.makeCount = 0;
@@ -30,7 +44,9 @@ function Ketron(I, game) {
     if(this.landTimer) this.time = 0;
 
     if(this.time <= 0) {
-      this.time = game.speed - game.level;
+      let speed = game.speed - game.level;
+      if(speed < 0) speed = 0;
+      this.time = speed;
       if(!this.landTimer) {
         this.pos.y += 1;
         this.makeBits();
@@ -242,11 +258,15 @@ function Ketron(I, game) {
 
   for (var k of this.ketbits) if(k) {
     for (var gk of game.ketbits) {
-      if(k.pos.equals(gk.pos)) game.gameOver();
+      if(k.pos.equals(gk.pos)) {
+        game.gameOver();
+        return;
+      }
     }
   }
 
   this.draw = () => {
+    if(game.next != this && game.held != this) this.drawGhost();
     for (var k of this.ketbits) if(k) k.update();
     if(this.landTimer) {
       // for (var k of this.ketbits) if(k) k.draw();

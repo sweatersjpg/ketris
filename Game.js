@@ -77,28 +77,31 @@ function Game(level) {
       spr(1, 10*16, i*16, 1, 1, true);
     }
 
+    setCamera(0,0);
+    // put(this.shake.mag());
+
     setCamera(this.shake.x,this.shake.y);
 
     // put(sprImg.length);
 
     palset([64,64,64,63,64]);
-    spr(58, 16, 0, 6, 4);
+    spr(58, 16+8, 8, 5, 3);
     put("NEXT", 35, 49, 63);
 
-    spr(58, 16, 48, 6, 4);
+    spr(58, 16+8, 48+8, 5, 3);
     put("HOLD", 35, 97, 63);
 
     setCamera(200+6*16+this.shake.x, this.shake.y + 16);
     put("-SCORE-", 0.1, 0.1);
     put(this.score, 0.1, 10);
     put("-LINES-", 0.1, 22);
-    put(this.rowsCleared, 0.1, 30);
+    put(this.rowsCleared, 0.1, 32);
   }
 
-  this.addShake = (amp) => {
+  this.addShake = (amp, smaller) => {
     let a = amp || 2;
-    if(this.shake.mag()) this.shake.setMag(this.shake.mag()+a);
-    else this.shake.set(3,0).rotate(radians(random([0, 120, 240])));
+    if(this.shake.mag() >= 1) this.shake.setMag(this.shake.mag()+a);
+    else this.shake.set(a > 3 || smaller ? a : 3,0).rotate(radians(random([0, 120, 240])));
   }
 
   this.gameLoop = () => {
@@ -107,7 +110,7 @@ function Game(level) {
     cls(this.background);
     // for (var i = 0; i < floor(random(1,4)); i++) ketronNames[5] = changeStringRandom(ketronNames[5]);
 
-    if(this.shake.mag() >= 0.01) {
+    if(this.shake.mag() >= 1) {
       this.shake.rotate(this.shake.heading()+TWO_PI/3);
       this.shake.setMag(this.shake.mag()-1);
     }
@@ -156,7 +159,7 @@ function Game(level) {
     let rows = 0;
     for (var i = 0; i < rowCount.length; i++) if(rowCount[i] >= 10) {
       rows++;
-      this.addShake();
+      this.addShake(4);
     }
 
     let heads = 0;
@@ -185,42 +188,63 @@ function Game(level) {
     this.score += score[rows] * (this.level + 1);
   }
 
+  this.start = () => {
+    this.speed = 30;
+    this.level = 0;
+    this.score = 0;
+    this.rowsCleared = 0;
+
+    this.ketron = new Ketron(random(ketronIndex), this);
+    this.next = new Ketron(random(ketronIndex), this);
+    this.held = false;
+
+    for (var p of this.particles) if(p.hasOwnProperty('falling')) p.falling = true;
+
+    this.draw = this.gameLoop;
+  }
+
   this.gameOver = () => {
 
-    if(this.ketron) for (var k of this.ketron.ketbits) if(k) {
-      this.ketbits.push(k);
-    }
+    if(this.ketron) for (var k of this.ketron.ketbits) if(k) this.ketbits.push(k);
+
     this.ketron = false;
+    new GameOverParticle(this);
+    this.addShake(5);
 
     this.draw = () => {
       cls(this.background);
 
-      setCamera(200-5*16, 0);
+      if(this.shake.mag() >= 0.01) {
+        this.shake.rotate(this.shake.heading()+TWO_PI/3);
+        this.shake.setMag(this.shake.mag()-1);
+      }
+
+      setCamera(200-5*16+this.shake.x, this.shake.y);
       for (var k of this.ketbits) k.draw();
 
       for (var i = this.ketbits.length-1; i >= 0; i--) this.ketbits[i].kill();
 
       for (var i = this.particles.length-1; i >= 0; i--) this.particles[i].draw();
 
-      if(btn('b') && !pbtn('b')) drawFN = new Game();
+      if(btn('b') && !pbtn('b')) this.start();
 
       this.drawUI();
       setCamera(0, 0);
       lset(0);
 
-      put("GAME OVER", 199-9*4, 120-4, this.background);
-      put("GAME OVER", 201-9*4, 120-4, this.background);
-      put("GAME OVER", 200-9*4, 121-4, this.background);
-      put("GAME OVER", 200-9*4, 119-4, this.background);
-
-      put("GAME OVER", 200-9*4, 120-4, 63);
-
-      put("PRESS R", 199-7*4, 120-4+8, this.background);
-      put("PRESS R", 201-7*4, 120-4+8, this.background);
-      put("PRESS R", 200-7*4, 121-4+8, this.background);
-      put("PRESS R", 200-7*4, 119-4+8, this.background);
-
-      put("PRESS R", 200-7*4, 120-4+8, 63);
+      // put("GAME OVER", 199-9*4, 120-4, this.background);
+      // put("GAME OVER", 201-9*4, 120-4, this.background);
+      // put("GAME OVER", 200-9*4, 121-4, this.background);
+      // put("GAME OVER", 200-9*4, 119-4, this.background);
+      //
+      // put("GAME OVER", 200-9*4, 120-4, 63);
+      //
+      // put("PRESS R", 199-7*4, 120-4+8, this.background);
+      // put("PRESS R", 201-7*4, 120-4+8, this.background);
+      // put("PRESS R", 200-7*4, 121-4+8, this.background);
+      // put("PRESS R", 200-7*4, 119-4+8, this.background);
+      //
+      // put("PRESS R", 200-7*4, 120-4+8, 63);
       // noLoop();
     }
   }
@@ -230,11 +254,11 @@ function Game(level) {
 function HeadParticle(game, x, y, angle, pal) {
   game.particles.push(this);
   this.pos = new Vector(x, y);
-  this.vel = new Vector(random(-2,2),random(-5,-12));
+  this.vel = new Vector(random(-2,2),random(-5,-8));
   this.angle = angle;
   this.avel = random([-5,5,-10,10]);
   this.draw = () => {
-    this.vel.y += 1;
+    this.vel.y += 0.5;
     this.pos.add(this.vel);
     this.angle += this.avel;
 
@@ -262,7 +286,7 @@ function Blood(game, x, y) {
   this.vel = new Vector(random(-5,5),random(-5,-12));
   this.size = random([4,2]);
 
-  if(random() < 0.70) new Blood(game, x, y);
+  if(random() < 0.75) new Blood(game, x, y);
   // setTimeout(() => {new Blood(game, x, y)}, 0);
 
   this.draw = () => {
@@ -278,6 +302,38 @@ function Blood(game, x, y) {
   }
   this.kill = () => {
     game.particles.splice(game.particles.indexOf(this), 1);
+  }
+}
+
+function GameOverParticle(game) {
+  game.particles.push(this);
+
+  this.pos = new Vector(40, -48);
+  this.vel = new Vector();
+
+  this.falling = false;
+
+  this.kill = () => {
+    game.particles.splice(game.particles.indexOf(this), 1);
+  }
+
+  this.draw = () => {
+    this.vel.add(0,0.5);
+    this.pos.add(this.vel);
+
+    if(!this.falling) {
+      let y = 96;
+      if(this.pos.y > y) {
+        this.pos.y = y;
+        if(ceil(this.vel.y) >= 12) game.addShake(4);
+        else if(ceil(this.vel.y) >= 4) game.addShake(2, true);
+        this.vel.y *= -0.40;
+      }
+    } else if(this.pos.y > 240) this.kill();
+
+    lset(1);
+    palset([0,64,64,63,64]);
+    spr(154, this.pos.x, this.pos.y, 5, 3, false, round(this.vel.y)*2);
   }
 }
 
