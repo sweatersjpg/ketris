@@ -174,10 +174,11 @@ function Game(level) {
     }
 
     this.updateScore(rows, heads);
+    if(rows) for (var p of this.particles) if(p.dog) p.encourage(rows);
 
     for (var i = this.ketbits.length-1; i >= 0; i--) if(this.ketbits[i].dead) this.ketbits[i].kill();
   }
-  this.draw = this.gameLoop;
+  // this.draw = this.gameLoop;
 
   this.updateScore = (rows, heads) => {
     let score = [0, 40, 100, 300, 1200];
@@ -203,6 +204,50 @@ function Game(level) {
     this.draw = this.gameLoop;
   }
 
+  this.title = () => {
+    this.titleStep = 0;
+    this.anyKeyPressed = true;
+    this.anyKey = false;
+    this.message = "";
+    this.particles = [];
+
+    let frames = [250,250,252,254,254];
+    let pal = [0,1,2,3,64];
+    new Dog(this, 200-16, 120-24, frames, pal, 2, 3, false, -90);
+
+    this.draw = () => {
+      cls(this.background);
+
+      if(this.shake.mag() >= 0.01) {
+        this.shake.rotate(this.shake.heading()+TWO_PI/3);
+        this.shake.setMag(this.shake.mag()-1);
+      }
+
+      if(this.anyKey) {
+        this.message += this.anyKey;
+
+        if(this.titleStep == 0) {
+          this.particles[0].encourage();
+          new Murderer(this);
+        } else if (this.titleStep == 1) {
+          new TitleParticle(this);
+        } else if(this.titleStep == 2) {
+          for(var p of this.particles) if(p.hasOwnProperty('killKetron')) p.killKetron();
+          this.start();
+        }
+
+        this.titleStep++;
+      }
+
+      setCamera(this.shake.x, this.shake.y);
+
+      if(floor(frameCount/16)%2) put("PRESS ANY KEY", 200 - 13*4, 240-10);
+
+      for (var i = this.particles.length-1; i >= 0; i--) this.particles[i].draw();
+      this.anyKey = false;
+    }
+  }
+
   this.gameOver = () => {
 
     if(this.ketron) for (var k of this.ketron.ketbits) if(k) this.ketbits.push(k);
@@ -210,6 +255,8 @@ function Game(level) {
     this.ketron = false;
     new GameOverParticle(this);
     this.addShake(5);
+    this.anyKeyPressed = true;
+    this.anyKey = false;
 
     this.draw = () => {
       cls(this.background);
@@ -226,28 +273,25 @@ function Game(level) {
 
       for (var i = this.particles.length-1; i >= 0; i--) this.particles[i].draw();
 
-      if(btn('b') && !pbtn('b')) this.start();
+      if(this.anyKey) this.start();
 
       this.drawUI();
-      setCamera(0, 0);
-      lset(0);
-
-      // put("GAME OVER", 199-9*4, 120-4, this.background);
-      // put("GAME OVER", 201-9*4, 120-4, this.background);
-      // put("GAME OVER", 200-9*4, 121-4, this.background);
-      // put("GAME OVER", 200-9*4, 119-4, this.background);
-      //
-      // put("GAME OVER", 200-9*4, 120-4, 63);
-      //
-      // put("PRESS R", 199-7*4, 120-4+8, this.background);
-      // put("PRESS R", 201-7*4, 120-4+8, this.background);
-      // put("PRESS R", 200-7*4, 121-4+8, this.background);
-      // put("PRESS R", 200-7*4, 119-4+8, this.background);
-      //
-      // put("PRESS R", 200-7*4, 120-4+8, 63);
-      // noLoop();
+      this.anyKey = false;
     }
   }
+
+  this.keydown = (e) => {
+    if(!this.anyKeyPressed) {
+      this.anyKey = e.key;
+      this.anyKeyPressed = true;
+    }
+  }
+
+  this.keyup = () => {
+    this.anyKeyPressed = false;
+  }
+
+  this.title();
 
 }
 
@@ -280,6 +324,108 @@ function HeadParticle(game, x, y, angle, pal) {
   }
 }
 
+function Animation(game, x, y, frames, pal, ...rest) {
+  game.particles.push(this);
+  this.t = 0;
+  this.draw = () => {
+    palset(pal);
+    lset(0);
+    spr(frames[this.t], x, y, ...rest);
+    this.t++;
+    if(this.t == frames.length) this.t = 0;
+  }
+  this.kill = () => {
+    game.particles.splice(game.particles.indexOf(this), 1);
+  }
+}
+
+function Dog(game, x, y, ...rest) {
+  Animation.call(this, game, x, y, ...rest);
+  this.timer = 0;
+
+  this.dog = true;
+  this.encourage = () => {
+    this.timer = 30;
+    new Bark(game, x-16, y);
+  }
+  this.defDraw = this.draw;
+  this.draw = () => {
+    this.defDraw();
+
+    if(this.timer) {
+      this.timer--;
+
+      palset([0,1,2,3,64]);
+      lset(0);
+      spr(234, x-8, y+8, 2, 1);
+    }
+  }
+}
+
+function Bark(game, x, y) {
+  game.particles.push(this);
+  this.pos = new Vector(x,y);
+  this.word = random([256, 258, 272, 274]);
+  this.vel = new Vector(0, -1);
+
+  this.draw = () => {
+
+    let cycle = [0,0,1,1,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,1,1,0,0];
+    let pal = [64,64,64,64,64];
+    pal[3] = cycle[y - this.pos.y];
+
+    palset(pal);
+
+    spr(this.word, this.pos.x, this.pos.y, 2, 1);
+
+    this.pos.add(this.vel);
+    if(y-this.pos.y >= cycle.length) this.kill();
+  }
+
+  this.kill = () => {
+    game.particles.splice(game.particles.indexOf(this), 1);
+  }
+}
+
+function Murderer(game) {
+  game.particles.push(this);
+  this.pos = new Vector(200-16, -32);
+  this.vel = new Vector(0,0);
+  this.hasKilled = false;
+
+  this.draw = () => {
+
+    this.vel.add(0,1);
+    this.pos.add(this.vel);
+
+    if(this.pos.y > 120-16) {
+      this.pos.y = 120-16;
+      this.vel.y = 0;
+      if(!this.hasKilled) {
+        game.addShake(5);
+        this.hasKilled = true;
+        game.particles[0].kill();
+        // for (let i = 0; i < 3; i++)
+        // new Blood(game, 200, 120+20);
+      }
+    }
+
+    lset(1);
+    palset([0,1,2,3,64]);
+    spr(26, this.pos.x, this.pos.y, 2, 2, false, 180);
+
+    if(this.hasKilled) {
+      palset([16,64,64,64,64]);
+      spr(160, 200-32, 120, 4, 2);
+    }
+
+  }
+
+  this.kill = () => {
+    game.particles.splice(game.particles.indexOf(this), 1);
+  }
+}
+
 function Blood(game, x, y) {
   game.particles.push(this);
   this.pos = new Vector(x, y);
@@ -293,7 +439,7 @@ function Blood(game, x, y) {
     this.vel.add(0,1);
     this.pos.add(this.vel);
 
-    lset(3);
+    lset(0);
 
     palset([16,64,64,64,64]);
     spr(0, this.pos.x, this.pos.y, 1, 1, false, floor(degrees(this.vel.heading())), this.size*2, this.size);
@@ -302,6 +448,81 @@ function Blood(game, x, y) {
   }
   this.kill = () => {
     game.particles.splice(game.particles.indexOf(this), 1);
+  }
+}
+
+function TitleParticle(game) {
+  game.particles.push(this);
+
+  this.pos = new Vector(200-14, -80);
+  this.vel = new Vector();
+  this.timer = 0;
+
+  this.falling = false;
+
+  this.kill = () => {
+    game.particles.splice(game.particles.indexOf(this), 1);
+  }
+
+  this.draw = () => {
+    let oldC = new Vector(camera.x, camera.y);
+    this.vel.add(0,0.5);
+    this.pos.add(this.vel);
+
+    if(this.timer) this.timer--;
+
+    if(!this.falling) {
+      let y = 120-34;
+      if(this.pos.y > y) {
+        this.pos.y = y;
+        if(ceil(this.vel.y) >= 12) {
+          game.addShake(4);
+          this.timer = 30;
+        }
+        else if(ceil(this.vel.y) >= 4) game.addShake(2, true);
+        this.vel.y *= -0.40;
+      }
+    } else if(this.pos.y > 240) this.kill();
+
+    setCamera(game.shake.y, game.shake.y);
+
+    lset(2);
+    palset([0,1,2,3,64]);
+    spr(48, this.pos.x, this.pos.y, 2, 5, false, -90+ round(this.vel.y)*2);
+
+    if(!this.end && this.timer == 1) {
+      this.end = true;
+      this.timer = 30;
+    }
+    if(this.end && this.timer == 1) {
+      this.killKetron();
+      if(game.draw !== game.gameLoop) {
+        new Blood(game, 200, 120);
+        new Blood(game, 200, 120);
+        new Blood(game, 200, 120);
+        new Blood(game, 200, 120);
+        new HeadParticle(game, 200, 120-16, 0, [0,1,2]);
+      }
+    }
+
+    if(this.end && this.timer && frameCount%2) {
+      lset(2);
+      palset([16,16,16,16,64]);
+      spr(48, this.pos.x, this.pos.y, 2, 5, false, -90+ round(this.vel.y)*2);
+    }
+    if(this.end && !this.timer) {
+      lset(2);
+      palset([16,64,64,64,64]);
+      spr(50, this.pos.x, this.pos.y, 2, 5, false, -90+ round(this.vel.y)*2);
+    }
+    setCamera(oldC.x, oldC.y);
+  }
+
+  this.killKetron = () => {
+    if(this.falling) return;
+    for (var p of game.particles) if(p.hasOwnProperty('hasKilled')) p.kill();
+    cls(16);
+    game.addShake(5);
   }
 }
 
@@ -358,7 +579,7 @@ function changeStringRandom(str) {
   return str.join("");
 }
 
-let eventsToAdd = ['keydown', 'mousedown', 'dblclick', 'blur', 'focus'];
+let eventsToAdd = ['keydown', 'mousedown', 'dblclick', 'blur', 'focus', 'keyup'];
 for (let EVENT of eventsToAdd)
 window.addEventListener(EVENT, e => {
   if(!pause_Button_.paused && drawFN && drawFN[EVENT]) drawFN[EVENT](e);
