@@ -56,7 +56,7 @@ let ketrons = [
 function Game(level) {
   this.speed = 30;
   this.level = 0;
-  this.score = 0;
+  this.score = new Score(this);
   this.rowsCleared = 0;
 
   this.ketbits = [];
@@ -69,7 +69,7 @@ function Game(level) {
   this.shake = new Vector(0,0);
 
   this.drawUI = () => {
-    setCamera(200-5*16+this.shake.x, this.shake.y);
+    setCamera((D.W/2)-5*16+this.shake.x, this.shake.y);
 
     for (var i = 0; i < 15; i++) {
       palset([63,64,64,64,64]);
@@ -78,6 +78,11 @@ function Game(level) {
     }
 
     setCamera(0,0);
+
+    if(DEBUG) {
+      put(JSON.stringify(this.ketron.keytime), 0.1, 0.1, 63);
+
+    }
     // put(this.shake.mag());
 
     setCamera(this.shake.x,this.shake.y);
@@ -91,11 +96,12 @@ function Game(level) {
     spr(58, 16+8, 48+8, 5, 3);
     put("HOLD", 35, 97, 63);
 
-    setCamera(200+6*16+this.shake.x, this.shake.y + 16);
+    setCamera((D.W/2)+6*16+this.shake.x, this.shake.y + 16);
     put("-SCORE-", 0.1, 0.1);
-    put(this.score, 0.1, 10);
-    put("-LINES-", 0.1, 22);
-    put(this.rowsCleared, 0.1, 32);
+    // put(this.score, 0.1, 10);
+    this.score.draw();
+    put("-LINES-", 0.1, 22, 3);
+    put(this.rowsCleared, 0.1, 32, 3);
   }
 
   this.addShake = (amp, smaller) => {
@@ -129,7 +135,7 @@ function Game(level) {
       this.held.draw();
     }
 
-    setCamera(200-5*16 + this.shake.x, 0 + this.shake.y);
+    setCamera((D.W/2)-5*16 + this.shake.x, 0 + this.shake.y);
 
     if(btn('a') && !pbtn('a') && this.heldHistory != this.ketron) {
       let held = this.held;
@@ -158,8 +164,10 @@ function Game(level) {
 
     let rows = 0;
     for (var i = 0; i < rowCount.length; i++) if(rowCount[i] >= 10) {
-      rows++;
+      let scores = [40, 60, 200, 900];
       this.addShake(4);
+      new ScoreParticle(this, (D.W/2), i*16, scores[rows]);
+      rows++;
     }
 
     let heads = 0;
@@ -173,26 +181,28 @@ function Game(level) {
       }
     }
 
-    this.updateScore(rows, heads);
+    this.updateScore(rows);
     if(rows) for (var p of this.particles) if(p.dog) p.encourage(rows);
 
     for (var i = this.ketbits.length-1; i >= 0; i--) if(this.ketbits[i].dead) this.ketbits[i].kill();
   }
   // this.draw = this.gameLoop;
 
-  this.updateScore = (rows, heads) => {
-    let score = [0, 40, 100, 300, 1200];
+  this.updateScore = (rows) => {
+    // let score = [0, 40, 100, 300, 1200];
+    // [40, 60, 200, 900]
 
     this.rowsCleared += rows;
     this.level = floor(this.rowsCleared/10);
 
-    this.score += score[rows] * (this.level + 1);
+    // this.score.add(score);
+     // += score[rows] * (this.level + 1);
   }
 
   this.start = () => {
     this.speed = 30;
     this.level = 0;
-    this.score = 0;
+    this.score = new Score(this);
     this.rowsCleared = 0;
 
     this.ketron = new Ketron(random(ketronIndex), this);
@@ -213,7 +223,7 @@ function Game(level) {
 
     let frames = [250,250,252,254,254];
     let pal = [0,1,2,3,64];
-    new Dog(this, 200-16, 120-24, frames, pal, 2, 3, false, -90);
+    new Dog(this, (D.W/2)-16, 120-24, frames, pal, 2, 3, false, -90);
 
     this.draw = () => {
       cls(this.background);
@@ -241,7 +251,7 @@ function Game(level) {
 
       setCamera(this.shake.x, this.shake.y);
 
-      if(floor(frameCount/16)%2) put("PRESS ANY KEY", 200 - 13*4, 240-10);
+      if(floor(frameCount/16)%2) put("PRESS ANY KEY", (D.W/2) - 13*4, 240-10);
 
       for (var i = this.particles.length-1; i >= 0; i--) this.particles[i].draw();
       this.anyKey = false;
@@ -266,7 +276,7 @@ function Game(level) {
         this.shake.setMag(this.shake.mag()-1);
       }
 
-      setCamera(200-5*16+this.shake.x, this.shake.y);
+      setCamera((D.W/2)-5*16+this.shake.x, this.shake.y);
       for (var k of this.ketbits) k.draw();
 
       for (var i = this.ketbits.length-1; i >= 0; i--) this.ketbits[i].kill();
@@ -293,284 +303,6 @@ function Game(level) {
 
   this.title();
 
-}
-
-function HeadParticle(game, x, y, angle, pal) {
-  game.particles.push(this);
-  this.pos = new Vector(x, y);
-  this.vel = new Vector(random(-2,2),random(-5,-8));
-  this.angle = angle;
-  this.avel = random([-5,5,-10,10]);
-  this.draw = () => {
-    this.vel.y += 0.5;
-    this.pos.add(this.vel);
-    this.angle += this.avel;
-
-    lset(3);
-
-    palset([pal[0],pal[1],pal[2],64,64]);
-    spr(6, this.pos.x, this.pos.y, 1, 1, false, this.angle);
-
-    palset([16, 64,64,64,64]);
-    spr(7, this.pos.x, this.pos.y, 1, 1, false, this.angle+180);
-
-    palset([64,64,64,63,64]);
-    spr(6, this.pos.x, this.pos.y, 1, 1, false, this.angle);
-
-    if(this.pos.y > 240) this.kill();
-  }
-  this.kill = () => {
-    game.particles.splice(game.particles.indexOf(this), 1);
-  }
-}
-
-function Animation(game, x, y, frames, pal, ...rest) {
-  game.particles.push(this);
-  this.t = 0;
-  this.draw = () => {
-    palset(pal);
-    lset(0);
-    spr(frames[this.t], x, y, ...rest);
-    this.t++;
-    if(this.t == frames.length) this.t = 0;
-  }
-  this.kill = () => {
-    game.particles.splice(game.particles.indexOf(this), 1);
-  }
-}
-
-function Dog(game, x, y, ...rest) {
-  Animation.call(this, game, x, y, ...rest);
-  this.timer = 0;
-
-  this.dog = true;
-  this.encourage = () => {
-    this.timer = 30;
-    new Bark(game, x-16, y);
-  }
-  this.defDraw = this.draw;
-  this.draw = () => {
-    this.defDraw();
-
-    if(this.timer) {
-      this.timer--;
-
-      palset([0,1,2,3,64]);
-      lset(0);
-      spr(234, x-8, y+8, 2, 1);
-    }
-  }
-}
-
-function Bark(game, x, y) {
-  game.particles.push(this);
-  this.pos = new Vector(x,y);
-  this.word = random([256, 258, 272, 274]);
-  this.vel = new Vector(0, -1);
-
-  this.draw = () => {
-
-    let cycle = [0,0,1,1,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,1,1,0,0];
-    let pal = [64,64,64,64,64];
-    pal[3] = cycle[y - this.pos.y];
-
-    palset(pal);
-
-    spr(this.word, this.pos.x, this.pos.y, 2, 1);
-
-    this.pos.add(this.vel);
-    if(y-this.pos.y >= cycle.length) this.kill();
-  }
-
-  this.kill = () => {
-    game.particles.splice(game.particles.indexOf(this), 1);
-  }
-}
-
-function Murderer(game) {
-  game.particles.push(this);
-  this.pos = new Vector(200-16, -32);
-  this.vel = new Vector(0,0);
-  this.hasKilled = false;
-
-  this.draw = () => {
-
-    this.vel.add(0,1);
-    this.pos.add(this.vel);
-
-    if(this.pos.y > 120-16) {
-      this.pos.y = 120-16;
-      this.vel.y = 0;
-      if(!this.hasKilled) {
-        game.addShake(5);
-        this.hasKilled = true;
-        game.particles[0].kill();
-        // for (let i = 0; i < 3; i++)
-        // new Blood(game, 200, 120+20);
-      }
-    }
-
-    lset(1);
-    palset([0,1,2,3,64]);
-    spr(26, this.pos.x, this.pos.y, 2, 2, false, 180);
-
-    if(this.hasKilled) {
-      palset([16,64,64,64,64]);
-      spr(160, 200-32, 120, 4, 2);
-    }
-
-  }
-
-  this.kill = () => {
-    game.particles.splice(game.particles.indexOf(this), 1);
-  }
-}
-
-function Blood(game, x, y) {
-  game.particles.push(this);
-  this.pos = new Vector(x, y);
-  this.vel = new Vector(random(-5,5),random(-5,-12));
-  this.size = random([4,2]);
-
-  if(random() < 0.75) new Blood(game, x, y);
-  // setTimeout(() => {new Blood(game, x, y)}, 0);
-
-  this.draw = () => {
-    this.vel.add(0,1);
-    this.pos.add(this.vel);
-
-    lset(0);
-
-    palset([16,64,64,64,64]);
-    spr(0, this.pos.x, this.pos.y, 1, 1, false, floor(degrees(this.vel.heading())), this.size*2, this.size);
-
-    if(this.pos.y > 240) this.kill();
-  }
-  this.kill = () => {
-    game.particles.splice(game.particles.indexOf(this), 1);
-  }
-}
-
-function TitleParticle(game) {
-  game.particles.push(this);
-
-  this.pos = new Vector(200-14, -80);
-  this.vel = new Vector();
-  this.timer = 0;
-
-  this.falling = false;
-
-  this.kill = () => {
-    game.particles.splice(game.particles.indexOf(this), 1);
-  }
-
-  this.draw = () => {
-    let oldC = new Vector(camera.x, camera.y);
-    this.vel.add(0,0.5);
-    this.pos.add(this.vel);
-
-    if(this.timer) this.timer--;
-
-    if(!this.falling) {
-      let y = 120-34;
-      if(this.pos.y > y) {
-        this.pos.y = y;
-        if(ceil(this.vel.y) >= 12) {
-          game.addShake(4);
-          this.timer = 30;
-        }
-        else if(ceil(this.vel.y) >= 4) game.addShake(2, true);
-        this.vel.y *= -0.40;
-      }
-    } else if(this.pos.y > 240) this.kill();
-
-    setCamera(game.shake.y, game.shake.y);
-
-    lset(2);
-    palset([0,1,2,3,64]);
-    spr(48, this.pos.x, this.pos.y, 2, 5, false, -90+ round(this.vel.y)*2);
-
-    if(!this.end && this.timer == 1) {
-      this.end = true;
-      this.timer = 30;
-    }
-    if(this.end && this.timer == 1) {
-      this.killKetron();
-      if(game.draw !== game.gameLoop) {
-        new Blood(game, 200, 120);
-        new Blood(game, 200, 120);
-        new Blood(game, 200, 120);
-        new Blood(game, 200, 120);
-        new HeadParticle(game, 200, 120-16, 0, [0,1,2]);
-      }
-    }
-
-    if(this.end && this.timer && frameCount%2) {
-      lset(2);
-      palset([16,16,16,16,64]);
-      spr(48, this.pos.x, this.pos.y, 2, 5, false, -90+ round(this.vel.y)*2);
-    }
-    if(this.end && !this.timer) {
-      lset(2);
-      palset([16,64,64,64,64]);
-      spr(50, this.pos.x, this.pos.y, 2, 5, false, -90+ round(this.vel.y)*2);
-    }
-    setCamera(oldC.x, oldC.y);
-  }
-
-  this.killKetron = () => {
-    if(this.falling) return;
-    for (var p of game.particles) if(p.hasOwnProperty('hasKilled')) p.kill();
-    cls(16);
-    game.addShake(5);
-  }
-}
-
-function GameOverParticle(game) {
-  game.particles.push(this);
-
-  this.pos = new Vector(40, -48);
-  this.vel = new Vector();
-
-  this.falling = false;
-
-  this.kill = () => {
-    game.particles.splice(game.particles.indexOf(this), 1);
-  }
-
-  this.draw = () => {
-    this.vel.add(0,0.5);
-    this.pos.add(this.vel);
-
-    if(!this.falling) {
-      let y = 96;
-      if(this.pos.y > y) {
-        this.pos.y = y;
-        if(ceil(this.vel.y) >= 12) game.addShake(4);
-        else if(ceil(this.vel.y) >= 4) game.addShake(2, true);
-        this.vel.y *= -0.40;
-      }
-    } else if(this.pos.y > 240) this.kill();
-
-    lset(1);
-    palset([0,64,64,63,64]);
-    spr(154, this.pos.x, this.pos.y, 5, 3, false, round(this.vel.y)*2);
-  }
-}
-
-function Particle(game, x, y, frames, pal, ...rest) {
-  game.particles.push(this);
-  this.life = 0;
-  this.draw = () => {
-    palset(pal);
-    lset(1);
-    spr(frames[this.life], x, y, ...rest);
-    this.life++;
-    if(this.life == frames.length) this.kill();
-  }
-  this.kill = () => {
-    game.particles.splice(game.particles.indexOf(this), 1);
-  }
 }
 
 function changeStringRandom(str) {

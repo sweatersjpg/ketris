@@ -16,12 +16,12 @@ const FRAMERATE = 30;
 const PAL = [
   '#c5ccb8','#9d9f7f','#6e6962','#211a2a','#a593a5','#8b5580','#433455','#211a2a',
   '#9a9a97','#6f6776','#433455','#211a2a','#64b1af','#387080','#433455','#211a2a',
-  '#9a4f50','#0057f6','#1737fe','#6f00e2','#be955c','#8d6268','#433455','#211a2a',
+  '#9a4f50','#211a2a','#211a2a','#211a2a','#be955c','#8d6268','#433455','#211a2a',
   '#7e9e99','#5d6872','#433455','#211a2a','#c6868e','#8b5580','#433455','#211a2a',
   '#9d9f7f','#557064','#433455','#211a2a','#7ca4c5','#416aa3','#433455','#211a2a',
-  '#ceaa00','#6fd600','#00e647','#17e69e','#00cede','#474747','#211a2a','#211a2a',
-  '#c5ccb8','#aecefe','#b6befe','#ceaefe','#f69efe','#feaee6','#fec6d6','#f6cfae',
-  '#fef6ae','#d6fea6','#96fe96','#9efeee','#6feaf6','#8e8e8e','#211a2a','#211a2a'
+  '#211a2a','#211a2a','#211a2a','#211a2a','#211a2a','#211a2a','#211a2a','#211a2a',
+  '#c5ccb8','#211a2a','#211a2a','#211a2a','#211a2a','#211a2a','#211a2a','#211a2a',
+  '#211a2a','#211a2a','#211a2a','#211a2a','#211a2a','#211a2a','#211a2a','#211a2a'
 ];
 let pointer_ = { y : 0, x : 0, c : 48, ox : 0 };
 let defaultControls_ = [[87, 38], [83, 40], [65, 37], [68, 39], [67, 13, 32], 82, 27, [9,81]];
@@ -115,12 +115,14 @@ function defaultMenu() {
   this.tic = 0;
 
   this.update = function() {
-    cls('3f');
+    cls(0);
 
-    palset([48,64,48]);
-    spr(0, 32, D.H/2 - 60, 8, 1);
-    palset([48,48,64]);
-    spr(0, 32, D.H/2 - 44, 8, 1);
+    let y = 96;
+
+    palset([1,64,1]);
+    spr(0, 32+y, D.H/2 - 60, 8, 1);
+    palset([1,1,64]);
+    spr(0, 32+y, D.H/2 - 44, 8, 1);
 
     if(!this.editing) {
       if(nplayers) {
@@ -134,8 +136,8 @@ function defaultMenu() {
       }
     }
 
-    textc('30');
-    put("PAUSED ", 32, D.H/2 - 20);
+    textc(63);
+    put("PAUSED ", 32+y, D.H/2 - 20);
     if(!nplayers) put("(press esc)");
 
     if( btn('a')) {
@@ -171,14 +173,13 @@ function defaultMenu() {
       if(this.selected > this.options - 1) this.selected = 0;
       if(this.selected < 0) this.selected = this.options - 1;
 
-      locate(32, D.H/2 + 4);
+      locate(32+y, D.H/2 + 4);
       put("DEBUG");
     // }
-    put(">", 24, D.H/2 - 4 + (this.selected * 8));
-    locate(32, D.H/2 - 4);
+    put(">", 24+y, D.H/2 - 4 + (this.selected * 8));
+    locate(32+y, D.H/2 - 4);
     put("RESTART");
 
-    textc('3f');
   }
 }
 
@@ -322,6 +323,7 @@ function cls(c) {
   resetPixels();
   if(typeof c == 'string') c = parseInt(c, 16);
   background(PAL[c]);
+  document.body.style.background = PAL[c];
   pointer_ = { x:0, y:0, c:63 };
 }
 
@@ -543,6 +545,7 @@ function setButton(n, b, e) {
   if(e.player == 'keyboard') p = 0;
   else p = player_.indexOf(e.player);
   gamepadbtns[p][n] = b;
+  // if(b) console.log(btnlist[n] + " was pressed.")
 }
 
 gamepad.on('connect', e => {
